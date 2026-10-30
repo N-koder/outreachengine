@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Outreach Engine | Prototype</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: '#3b82f6',
+                        darkbg: '#0f172a',
+                        cardbg: '#1e293b',
+                        bordercol: '#334155'
+                    }
+                }
+            }
+        }
+    </script>
+
+
+    <style>
+        body {
+            background-color: #0b0f19;
+            font-family: ui-sans-serif, system-ui, sans-serif;
+        }
+    </style>
+</head>
+
+<body class="text-slate-100 min-h-screen p-6">
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- HEADER -->
+        <header class="flex justify-between items-center border-b border-slate-800 pb-5">
+            <div>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl">⚡</span>
+                    <h1 class="text-xl font-bold tracking-tight text-white">Outreach & Verification Engine</h1>
+                </div>
+                <p class="text-xs text-slate-400 mt-1">Polygot Architecture: Python (FastAPI/Port 25 Handshake) +
+                    TypeScript(Dispatcher/Jitter)</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <span
+                    class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-embrald-950 text-embrald-400 border border-emerald-800">●
+                    Systems Online (3000 & 8000)</span>
+                <button onclick="resetCampaign()"
+                    class="text-xs py-3 py-1.5 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 border-slate-700 transition">Rest
+                    Demo</button>
+            </div>
+        </header>
+
+
+        <!-- SECTION 1: LIVE ON-THE-SPOT VERIFIER -->
+        <div class="bg-cardbg border border-bordercol rounded-xl p-5 shadow-lg">
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">
+                LIVE SMTP SOCKET & DNS Verifier (Python Microservice)
+            </h2>
+            <div class="flex gap-3">
+                <input id="quickEmailInput" type="email" placeholder="Enter any email"
+                    class="flex-1 bg-darkbg border border-slate-700 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-blue-500">
+                <button onclick="verifyEmailDirectly()"
+                    class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2 rounded-lg text-sm transition">Probe
+                    Mailbox</button>
+            </div>
+
+            <div id="verifyResult" class="hidden mt-4 p-3 rounded-lg border text-sm font-mono"></div>
+        </div>
+
+
+        <!-- SECTION 2: MAILBOX POOL (LOAD BALANCING) -->
+        <div>
+            <h2 class="text-sm font-semibold uppercase tracking-wider text-slate-400 mb-3">Mailbox Quota & Rotation Pool
+            </h2>
+            <div id="mailboxCards" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- JS Rendering -->
+            </div>
+        </div>
+
+
+        <!-- SECTION 3 : CAMPAIGN CONTROLS & LEAD TABLE -->
+        <div class="bg-cardbg border border-bordercol rounded-xl p-5 shadow-lg space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">Active Campaign Leads</h2>
+                    <p class="text-xs text-slate-500">Only 100% verified deliverable leads are admitted into the sending
+                        queue</p>
+                </div>
+
+                <div class="flex gap-2">
+                    <button onclick="importSampleLeads()"
+                        class="bg-embrald-600 hover:bg-embrald-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+                        <span>📥</span> Import and Auto-Verify Leads
+                    </button>
+
+                    <button onclick="launchCampaign()"
+                        class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-4 py-2 rounded-lg text-sm transition flex items-center gap-1.5">
+                        <span>Launch Outreach(with Jitter)</span>
+                    </button>
+
+                </div>
+            </div>
+
+
+            <!-- LEADs TABLE -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left text-sm text-slate-300">
+                    <thead class="bg-slate-900/60 text-xs uppercase text-slate-400 border-b border-bordercol">
+                        <tr>
+                            <th class="py-3 px-4">Prospect</th>
+                            <th class="py-3 px-4">Company</th>
+                            <th class="py-3 px-4">Current Step</th>
+                            <th class="py-3 px-4">State Machine Status</th>
+                            <th class="py-3 px-4 text-right">Actions</th>
+                        </tr>
+                    </thead>
+
+                    <tbody id="leadsTableBody" class="divide-y divide-bordercol font-mono text-xs">
+                        <!-- JS Rendering -->
+                    </tbody>
+                </table>
+            </div>
+
+
+        </div>
+
+
+        <!-- SECTION 4: LIVE TERMINAL EVENT LOGS -->
+        <div class="bg-black/80 border border-slate-800 rounded-xl p-4 font-mono text-xs">
+            <div class="flex justify-between items-center text-slate-400 mb-2 border-b border-slate-800 pb-2">
+                <span>Live Engine Log Stream</span>
+                <button onclick="document.getElementById('eventLog').innerHTML=''"
+                    class="hover:text-white">Clear</button>
+            </div>
+
+            <div id="eventLog" class="h-28 overflow-y-auto space-y-1 text-slate-300">
+                <p class="text-slate-500">[System] Outreach engine intialized and listening</p>
+            </div>
+        </div>
+
+
+    </div>
+
+    <script>
+        function log(msg, color = "text-slate-300") {
+            const el = document.getElementById('eventLog');
+            const time = new Date().toLocaleTimeString();
+
+            el.innerHTML = `<p class="${color}">[${time}] ${msg}</p>` + el.innerHTML;
+        }
+
+        async function fetchStatus() {
+            try {
+                const res = await fetch("/api/campaigns/status");
+                const data = await res.json();
+                renderMailboxes(data.mailboxes || []);
+                renderLeads(data.leads || []);
+            } catch (err) {
+                log("Error fetching system status : " + err.message, "text-rose-400");
+            }
+        }
+
+        function renderMailboxes(mailboxes) {
+            const container = document.getElementById("mailboxCards");
+            container.innerHTML = mailboxes.map(mb => {
+                const percent = Math.min(100, Math.round((mb.sentToday / mb.dailyLimit || 30) * 100));
+                return `<div class="bg-cardbg border border-bordercol rounded-xl p-4">
+            <div class="flex justify-between items-center mb-2">
+              <span class="font-mono text-xs text-slate-300">${mb.email}</span>
+              <span class="text-xs px-2 py-0.5 rounded ${mb.status === 'ACTIVE' ? 'bg-emerald-950 text-emerald-400 border border-emerald-800' : 'bg-rose-950 text-rose-400'}">${mb.status}</span>
+            </div>
+            <div class="flex justify-between text-xs text-slate-400 mb-1">
+              <span>Quota Used Today</span>
+              <span class="font-mono">${mb.sentToday} / ${mb.dailyLimit || 30}</span>
+            </div>
+            <div class="w-full bg-slate-800 rounded-full h-1.5">
+              <div class="bg-blue-500 h-1.5 rounded-full" style="width: ${percent}%"></div>
+            </div>
+          </div>
+        `;
+            }).join("");
+
+        }
+
+        function renderLeads(leads) {
+            const tbody = document.getElementById("leadsTableBody");
+            if (leads.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" class="py-6 text-center text-slate-500">No leads in campaign pool. Click 'Import & Auto-Verify' above.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = leads.map(l => {
+                let badgeColor = "bg-slate-800 text-slate-300";
+                if (l.status === "PENDING") badgeColor = "bg-amber-950 text-amber-400 border border-amber-800";
+                if (l.status === "STEP_1_SENT") badgeColor = "bg-blue-950 text-blue-400 border border-blue-800";
+                if (l.status === "REPLIED") badgeColor = "bg-emerald-950 text-emerald-400 border border-emerald-800";
+                if (l.status === "BOUNCED") badgeColor = "bg-rose-950 text-rose-400 border border-rose-800";
+                return `
+          <tr>
+            <td class="py-3 px-4 font-medium text-white">${l.firstName} <span class="text-slate-400">(${l.email})</span></td>
+            <td class="py-3 px-4">${l.company}</td>
+            <td class="py-3 px-4">Step ${l.currentStep}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-xs ${badgeColor}">${l.status}</span></td>
+            <td class="py-3 px-4 text-right">
+              ${l.status !== 'REPLIED' && l.status !== 'BOUNCED' ? `
+                <button onclick="simulateReply('${l.email}')" class="text-xs bg-emerald-900/60 hover:bg-emerald-800 text-emerald-300 border border-emerald-700 px-2 py-1 rounded transition">
+                  Simulate Reply
+                </button>
+              ` : `<span class="text-slate-500 text-xs">Sequence Halted</span>`}
+            </td>
+          </tr>
+        `;
+            }).join("");
+        }
+        async function verifyEmailDirectly() {
+            const email = document.getElementById("quickEmailInput").value.trim();
+            if (!email) return;
+            const resEl = document.getElementById("verifyResult");
+            resEl.className = "mt-4 p-3 rounded-lg border text-sm font-mono bg-slate-900 border-slate-700 text-slate-300";
+            resEl.innerHTML = "⏳ Handshaking with MX mail server on port 25 & probing catch-all...";
+            resEl.classList.remove("hidden");
+            try {
+                const res = await fetch("/api/verify-direct", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email })
+                });
+                const data = await res.json();
+                const isGood = data.status === "VALID";
+                resEl.className = `mt-4 p-3 rounded-lg border text-sm font-mono ${isGood ? 'bg-emerald-950/40 border-emerald-800 text-emerald-300' : 'bg-rose-950/40 border-rose-800 text-rose-300'}`;
+                resEl.innerHTML = `
+          <strong>Status:</strong> ${data.status} (Code: ${data.smtp_code})<br>
+          <strong>Primary MX:</strong> ${data.mx_host || 'None'}<br>
+          <strong>Catch-All Domain:</strong> ${data.is_catch_all ? 'Yes (Risky)' : 'No (Strict)'}<br>
+          <strong>Reason:</strong> ${data.reason}
+        `;
+                log(`Live probe for ${email}: ${data.status}`, isGood ? "text-emerald-400" : "text-rose-400");
+            } catch (err) {
+                resEl.className = "mt-4 p-3 rounded-lg border text-sm font-mono bg-rose-950 border-rose-800 text-rose-300";
+                resEl.innerHTML = "❌ Failed to connect to Python Verifier Microservice on :8000";
+            }
+        }
+        async function importSampleLeads() {
+            log("📥 Sending leads batch to verification pipeline...", "text-blue-400");
+            const sampleLeads = [
+                { email: "webwork150@gmail.com", firstName: "Dev", company: "Antigravity" },
+                { email: "fake_ghost_user_9988@gmail.com", firstName: "Fake", company: "Nowhere" },
+                { email: "broken-syntax.xyz", firstName: "Bad", company: "Invalid" }
+            ];
+            const res = await fetch("/api/campaigns/import-and-verify", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ leads: sampleLeads })
+            });
+            const data = await res.json();
+            log(`Import complete: ${data.summary.verifiedAndImported} verified, ${data.summary.rejected} rejected.`, "text-emerald-400");
+            fetchStatus();
+        }
+        async function launchCampaign() {
+            log("🚀 Launching campaign dispatcher with randomized jitter...", "text-blue-400");
+            const res = await fetch("/api/campaigns/launch", { method: "POST" });
+            const data = await res.json();
+            if (!res.ok) {
+                log(`Launch failed: ${data.error}`, "text-rose-400");
+                return;
+            }
+            log(`Campaign triggered for ${data.queuedLeadsCount} leads. Refreshing states...`, "text-emerald-400");
+            setTimeout(fetchStatus, 3000);
+            setTimeout(fetchStatus, 6000);
+        }
+        async function simulateReply(email) {
+            log(`🔔 Triggering inbound reply webhook for ${email}...`, "text-amber-400");
+            const res = await fetch("/api/webhooks/reply", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+            const data = await res.json();
+            log(`State machine locked: ${email} -> REPLIED (Follow-ups aborted)`, "text-emerald-400");
+            fetchStatus();
+        }
+        async function resetCampaign() {
+            await fetch("/api/campaigns/reset", { method: "POST" });
+            log("Campaign reset to clean initial state.", "text-slate-400");
+            fetchStatus();
+        }
+        // Initial load
+        fetchStatus();
+    </script>
+</body>
+
+</html>

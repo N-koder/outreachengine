@@ -1,0 +1,20 @@
+# Dependencies
+node_modules/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Runtime & Simulation Data
+campaign_data.json
+*.log
+
+# Environment & Secret files
+.env
+.env.local
+
+# IDEs & System files
+.vscode/
+.idea/
+.kilo/
+.DS_Store
+Thumbs.db
