@@ -1,9 +1,103 @@
 import dns.resolver
-
+from typing import TypedDict, Optional
 
 resolver = dns.resolver.Resolver()
 resolver.timeout = 2.0
 resolver.lifetime = 3.0 
+
+
+class DomainHealthReport(TypedDict):
+    domain : str
+    spf_pass : bool
+    dmarc_pool : bool
+    health_score : int # 0 to 100
+    spf_record : Optional[str]
+    dmarc_record : Optional[str]
+    dmarc_policy : Optional[str] # "none", "quaratine", "reject"
+    status : str # "HEALTHY" (100), "AT_RISK" (50), "CRITICAL" (0)
+
+
+def check_domain_dns_health(domain:str) -> DomainHealthReport:
+    # Inspect DNS TXT records for SPF (v=spf1) and DMARC (_dmarc.<domain>)
+
+    clean_domain =  domain.strip().lower()
+    
+    spf_pass = False
+    spf_records = None
+    dmarc_pass = False
+    dmarc_records = None
+    dmarc_policy = None
+
+
+    # 1. CHECK SPF (TXT record on root domain)
+    try : 
+        txt_records = resolver.resolve(clean_domain , "TXT")
+
+        for rdata in txt_records:
+            txt_string = "".join([s.decode("utf-8" , errors = "ignore") for s in rdata.strings])
+
+            if txt_string.startswith("v=spf1"):
+                spf_pass = True
+                spf_records = txt_string
+                break
+
+    except Exception:
+        spf_pass = False
+
+
+    # 2. CHECK DMARC (TXT record on dmarc.<domain>)
+    dmarc_domain = f"_dmarc.{clean_domain}"
+
+    try:
+        dmarc_txt_records = resolver.resolve(dmarc_domain,"TXT")
+
+        for rdata in dmarc_txt_records:
+            txt_string = "".join([s.decode("utf-8", errors = "ignore") for s in rdata.strings])
+
+            if "v=DMARC1" in txt_string:
+                dmarc_pass = True
+                dmarc_records = txt_string
+
+
+                # Extract policy (p=reject, p=quarantine, p=none)
+                if "p=reject" in txt_string:
+                    dmarc_policy = "reject"
+                elif "p=quarantine" in txt_string:
+                    dmarc_policy = "quarantine"
+                elif "p=none" in txt_string:
+                    dmarc_policy = "none"
+
+                break
+
+    except Exception:
+        dmarc_pass = False
+
+
+
+    # 3. CALCULATE HEALTH SCORE
+    score = 0
+
+    if spf_pass:
+        score += 50
+
+    if dmarc_pass:
+        score += 50
+
+    status  = "HEALTHY" if score == 100 else ("AT_RISK" if score == 50 else "CRITICAL")
+
+
+    return {
+        "domain" : clean_domain,
+        "spf_pass" : spf_pass,
+        "dmarc_pass" : dmarc_pass,
+        "health_score" : score,
+        "spf_record" : spf_records,
+        "dmarc_record" : dmarc_records,
+        "dmarc_policy" : dmarc_policy,
+        "status" : status
+    }
+
+
 
 def get_mx_record(domain : str) -> list[str]:
     domain = domain.strip().lower()
@@ -298,4 +392,18 @@ if __name__ == "__main__":
         print(f"status : {report['status']} (Deliverable : {report['deliverable']})")
         print(f"CatchAll : {report['is_catch_all']}")
         print(f"Reason : {report['reason']}")
+        print("-"*60)
+
+
+
+
+    print("\n =============== TESTING DOMAIN DELIVERABILITY HEALTH ============== \n")
+    test_domains = ["google.com" , "stripe.com" , "github.com" , "byline.in" , "thebyline.in"]
+
+    for d in test_domains:
+        health = check_domain_dns_health(d)
+        print(f"Domain : {health['domain']}")
+        print(f"Status : {health['status']} ({health['health_score']}%)")
+        print(f"SPF : { 'PASS' if health['spf_pass'] else 'FAIL'}")
+        print(f"DMARC : { 'PASS' if health['dmarc_pass'] else 'FAIL'} (Policy : {health['dmarc_policy']}")
         print("-"*60)

@@ -1,7 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, EmailStr
 
-from verifier import verify_email, VerificationReport
+from verifier import verify_email, VerificationReport, check_domain_dns_health
 
 app = FastAPI(
     title = "OutreachEngine - Real-Time Deliverability Verifier",
@@ -16,6 +16,10 @@ class VerifyRequest(BaseModel):
 
 class BatchVerifyRequest(BaseModel):
     emails : list[str]
+
+class DomainHealthRequest(BaseModel):
+    domain : str
+
 
 @app.get('/')
 def health_check():
@@ -51,3 +55,10 @@ def verify_batch_emails(payload : BatchVerifyRequest):
         "catch_all" : catch_all_count,
         "results" : results
     }
+
+
+@app.post("/domain-health")
+def check_domain_health(payload : DomainHealthRequest):
+    # analyzes SPF and DMARC compilance for sender deliverability
+
+    return check_domain_dns_health(payload.domain)

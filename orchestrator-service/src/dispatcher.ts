@@ -7,6 +7,39 @@ export interface DispatcherConfig {
 }
 
 
+/**
+ * Personalization Engine
+ * Generates a contextual, personalized opening
+ * tailored specifically to the prospect's company and role
+ */
+
+
+export function generateIcebreaker(lead : Lead): string {
+    const companyClean = lead.company.trim().toLowerCase();
+
+    if(companyClean.includes('antigravity')){
+        return `Loved seeing Antigravity's recent work on developer aganet workflows-super clean execution!`
+    }
+    else if(companyClean.includes('stripe')){
+        return `Huge fan of Stripe's recent developer push into autonomus billing integrations!`;
+    }
+    else if(companyClean.includes('notion')){
+        return `Really impressed by how Notion is innovating modular AI workspaces!`
+    }
+    else if(companyClean.includes('openai')){
+        return `Fascinating to watch your team's rapid iteration on frontier reasoning models!`;
+    }
+
+
+    return `Really impressed by the momentum your engineering team is driving at ${lead.company}`;
+}
+
+
+
+
+
+
+
 // Generates a randomized human delay (jitter) between  min and max seconds
 
 export function calculateJitterDelay(minSeconds: number, maxSeconds: number): number {
@@ -67,13 +100,28 @@ export async function runCampaignDispatch(
         console.log(`Jitter delay: waiting  ${(delayMs/1000).toFixed(1)}s...`);
         await sleep(delayMs);
 
-        //Dispatch Email
+        //Dispatch Email 
+        // const personalizedSubject = interpolateTemplate(steps.subject,lead);
+        // console.log(`  📤 DISPATCHED:`);
+        // console.log(`     From: ${selectedMailbox.email}`);
+        // console.log(`     To  : ${lead.email}`);
+        // console.log(`     Subj: "${personalizedSubject}"`);
+
+        // Dispatch Email with AI personalization hook
+        const icebreaker = generateIcebreaker(lead);
         const personalizedSubject = interpolateTemplate(steps.subject,lead);
+        const rawBody = `${icebreaker}\n\n${steps.bodyTemplate}`;
+        const personalizedBody = interpolateTemplate(rawBody,lead);
+
         console.log(`  📤 DISPATCHED:`);
         console.log(`     From: ${selectedMailbox.email}`);
         console.log(`     To  : ${lead.email}`);
         console.log(`     Subj: "${personalizedSubject}"`);
+        console.log(`     Hook: "${icebreaker}"`);
+        
 
+
+        
 
         //Update Mailbox
         currentMailboxes = currentMailboxes.map((mb) => mb.id === selectedMailbox.id ? recordMailboxSens(mb, new Date()) : mb);

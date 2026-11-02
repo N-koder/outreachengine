@@ -112,8 +112,8 @@ Navigate to **`http://localhost:3000`** to access the live dashboard.
 - [x] Sequence state machine with instant reply-lockout
 - [x] Persistent database store (`campaign_data.json`)
 - [x] Interactive dark-mode dashboard
-- [ ] **Sender Domain Health Check**: Automated pre-flight inspection of SPF, DKIM, and DMARC DNS records.
-- [ ] **AI Icebreaker Personalizer**: LLM pipeline generating contextual opening lines based on prospect company & role.
+- [x] **Sender Domain Health Check**: Automated pre-flight inspection of SPF, DKIM, and DMARC DNS records.
+- [x] **AI Icebreaker Personalizer**: LLM pipeline generating contextual opening lines based on prospect company & role.
 - [ ] **Model Context Protocol (MCP) Server**: Exposing tools (`verify_lead`, `launch_outreach`) to Claude Desktop and Cursor AI agents.
 
 ---

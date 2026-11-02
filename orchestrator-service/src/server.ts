@@ -211,3 +211,23 @@ app.listen(PORT , () => {
     console.log(`🔗 Connected to Python Verifier at ${PYTHON_VERIFIED_URL}\n`);
     console.log(`💾 Persistent database loaded (${db.leads.length} leads saved)\n`);
 })
+
+
+app.post("/api/domain-health" , async (req : Request, res : Response) => {
+
+    try{
+        const response = await fetch("http://127.0.0.1:8000/domain-health" , {
+            method : 'POST',
+            headers : {'Content-Type' : 'application/json'},
+            body : JSON.stringify({domain : req.body.domain}),
+
+        });
+
+        const data = response.json();
+        return res.status(response.status).json(data);
+
+    }catch(err : any){
+        return res.status(500).json({error : "Domain health service unreachable: " + err.message});
+    }
+
+})
